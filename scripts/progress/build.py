@@ -809,8 +809,15 @@ def whats_left(lib, decls, index, problem_issues, notes, groups=()):
             m = re.search(r"\bpp?\.\s*(\d+)", title)
             out["notStated"].append(dict(number=iss["number"], title=title,
                                          group=group_for_page(groups, int(m.group(1)) if m else None, title)))
+    # The step of the paper each open statement belongs to, from its `Paper:` line: several
+    # issues can now state parts of one step (#7220, #7453 and #7485 are all of Proposition
+    # 10.2.2.2), and the page counts steps, so that a split does not look like a new problem.
+    out["step"] = {}
     for k in ("main", "used", "isolated", "classical", "proofs"):
-        out[k].sort(key=lambda i: decls[i]["issue"] or 0)
+        for i in out[k]:
+            p = decls[i]["paper"]
+            out["step"][str(i)] = [p["key"], p["label"]] if p else [decls[i]["show"], decls[i]["show"]]
+        out[k].sort(key=lambda i: (out["step"][str(i)][0], decls[i]["issue"] or 0))
     return out
 
 
